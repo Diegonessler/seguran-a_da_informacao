@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- [CORREÇÃO] Content Security Policy: bloqueia scripts inline e recursos externos não autorizados -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'; object-src 'none';" />
+  <title>Sistema de Ocorrências Acadêmicas</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">Segurança da Informação</p>
+      <h1>Sistema de Ocorrências Acadêmicas</h1>
+      <p class="subtitle">Protótipo didático — versão segura</p>
+    </div>
+
+    <div class="topbar-actions">
+      <span id="sessionBadge" class="badge muted">Sessão não iniciada</span>
+      <button id="logoutBtn" class="btn secondary hidden">Sair</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section id="loginView" class="card login-card">
+      <div>
+        <p class="eyebrow">Acesso</p>
+        <h2>Entrar no sistema</h2>
+        <p class="muted-text">
+          Use um dos usuários de demonstração para acessar o painel.
+        </p>
+      </div>
+
+      <form id="loginForm" class="form-grid">
+        <label>
+          E-mail
+          <!-- [CORREÇÃO] Campo sem valor pré-preenchido — usuário digita suas credenciais -->
+          <input id="email" type="email" autocomplete="email" required />
+        </label>
+
+        <label>
+          Senha
+          <!-- [CORREÇÃO] Sem value="123456" no HTML -->
+          <input id="password" type="password" autocomplete="current-password" required />
+        </label>
+
+        <button class="btn primary" type="submit">Entrar</button>
+      </form>
+
+      <div class="demo-users">
+        <h3>Usuários de demonstração</h3>
+        <ul>
+          <li><strong>aluno@faculdade.local</strong> / 123456 — Perfil: Aluno</li>
+          <li><strong>professor@faculdade.local</strong> / 123456 — Perfil: Professor</li>
+          <li><strong>admin@faculdade.local</strong> / admin — Perfil: Administrador</li>
+        </ul>
+        <p class="muted-text" style="font-size: 0.8em; margin-top: 0.5rem;">
+          ⚠️ Em produção, credenciais nunca devem aparecer na interface.
+        </p>
+      </div>
+    </section>
+
+    <section id="appView" class="hidden">
+      <section class="grid two">
+        <article class="card">
+          <p class="eyebrow">Usuário atual</p>
+          <h2 id="currentUserName">—</h2>
+          <p id="currentUserDetails" class="muted-text">—</p>
+
+          <!-- [CORREÇÃO] Seletor de perfil REMOVIDO — impedia escalada de privilégio -->
+          <!-- Anteriormente qualquer usuário podia se tornar ADMIN via este <select> -->
+          <div class="role-switch" style="display:none">
+            <!-- Removido intencionalmente -->
+          </div>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">Ações rápidas</p>
+          <h2>Ferramentas do painel</h2>
+          <div class="actions">
+            <!-- [CORREÇÃO] Botões visíveis somente para ADMIN (controlado pelo app.js) -->
+            <button id="exportBtn" class="btn secondary" type="button">Exportar dados</button>
+            <button id="clearLogsBtn" class="btn secondary" type="button">Limpar logs</button>
+            <button id="resetBtn" class="btn danger" type="button">Restaurar dados iniciais</button>
+          </div>
+        </article>
+      </section>
+
+      <section class="grid two">
+        <!-- [CORREÇÃO] Seção de formulário com id para controle de visibilidade por perfil -->
+        <article class="card" id="occurrenceFormSection">
+          <p class="eyebrow">Nova ocorrência</p>
+          <h2>Registrar ocorrência acadêmica</h2>
+
+          <form id="occurrenceForm" class="form-grid">
+            <label>
+              Nome do aluno
+              <input id="studentName" type="text" placeholder="Ex.: João da Silva" required />
+            </label>
+
+            <label>
+              Matrícula
+              <!-- [CORREÇÃO] type="text" com pattern garante validação no cliente -->
+              <input id="studentId" type="text" placeholder="Ex.: 202400123"
+                pattern="\d{6,12}" title="Somente números, 6 a 12 dígitos" required />
+            </label>
+
+            <label>
+              CPF
+              <input id="studentCpf" type="text" placeholder="Ex.: 000.000.000-00"
+                pattern="\d{3}\.\d{3}\.\d{3}-\d{2}" title="Formato: 000.000.000-00" required />
+            </label>
+
+            <label>
+              E-mail pessoal
+              <input id="studentEmail" type="email" placeholder="aluno@email.com" required />
+            </label>
+
+            <label>
+              Telefone
+              <input id="studentPhone" type="text" placeholder="(00) 00000-0000" />
+            </label>
+
+            <label>
+              Tipo de ocorrência
+              <select id="category">
+                <option>Nota</option>
+                <option>Frequência</option>
+                <option>Comportamento</option>
+                <option>Solicitação administrativa</option>
+                <option>Outro</option>
+              </select>
+            </label>
+
+            <label>
+              Prioridade
+              <select id="priority">
+                <option>Baixa</option>
+                <option>Média</option>
+                <option>Alta</option>
+                <option>Crítica</option>
+              </select>
+            </label>
+
+            <label class="span-2">
+              Descrição da ocorrência
+              <textarea id="description" rows="5"
+                placeholder="Descreva o ocorrido (mín. 10 caracteres)..." required></textarea>
+            </label>
+
+            <label class="span-2">
+              Observação interna
+              <textarea id="internalNote" rows="3"
+                placeholder="Visível apenas para professores e administradores..."></textarea>
+            </label>
+
+            <label class="check span-2">
+              <input id="privacyAck" type="checkbox" required />
+              Confirmo que estou autorizado a registrar estes dados pessoais conforme a LGPD.
+            </label>
+
+            <button class="btn primary span-2" type="submit">Salvar ocorrência</button>
+          </form>
+        </article>
+
+        <article class="card">
+          <p class="eyebrow">Busca</p>
+          <h2>Pesquisar registros</h2>
+
+          <label>
+            Termo de busca
+            <input id="search" type="search"
+              placeholder="Nome, matrícula, categoria ou texto..." />
+          </label>
+
+          <div class="summary">
+            <div>
+              <strong id="totalOccurrences">0</strong>
+              <span>ocorrências</span>
+            </div>
+            <div>
+              <strong id="criticalOccurrences">0</strong>
+              <span>críticas</span>
+            </div>
+          </div>
+
+          <!-- [CORREÇÃO] Aviso atualizado: busca não percorre CPF nem dados sensíveis -->
+          <div class="notice">
+            A busca filtra por nome, matrícula, categoria, status e descrição.
+            Dados sensíveis como CPF não são indexados na busca.
+          </div>
+        </article>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Registros</p>
+            <h2>Ocorrências cadastradas</h2>
+          </div>
+          <span id="lastUpdate" class="badge">—</span>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Aluno</th>
+                <th>Documento</th>
+                <th>Contato</th>
+                <th>Tipo</th>
+                <th>Prioridade</th>
+                <th>Status</th>
+                <th>Descrição</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <!-- [CORREÇÃO] tbody preenchido via createElement/textContent — sem innerHTML -->
+            <tbody id="occurrencesTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Auditoria</p>
+            <h2>Logs do sistema</h2>
+          </div>
+          <span class="badge muted">armazenamento local</span>
+        </div>
+
+        <div id="auditLog" class="log-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>
+      Protótipo estático para atividade prática — versão com correções de segurança aplicadas.
+    </p>
+  </footer>
+
+  <!-- [CORREÇÃO] Script no final, sem atributos onclick inline no HTML -->
+  <script src="app.js"></script>
+</body>
+</html>
